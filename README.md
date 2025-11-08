@@ -44,12 +44,14 @@ python xml_validator.py
 ### Output Examples
 
 **When all XML files are valid:**
-```
+
+```text
 All XML files are well-formed.
 ```
 
 **When malformed XML files are found:**
-```
+
+```text
 /path/to/bad_file.xml: XML is not well-formed. Error: mismatched tag: line 5, column 10
 /path/to/another_bad_file.xml: XML is not well-formed. Error: not well-formed (invalid token): line 3, column 15
 
@@ -61,18 +63,24 @@ The following files are not well-formed:
 ## Functions
 
 ### `check_xml_format(file_path)`
+
 Validates whether a single XML file is well-formed.
+
 - **Parameters**: `file_path` (str) - Path to the XML file
 - **Returns**: `True` if well-formed, `False` otherwise
 - **Error Handling**: Catches parsing errors and unexpected exceptions
 
 ### `check_files_in_directory(directory)`
+
 Recursively scans a directory and validates all XML files found.
+
 - **Parameters**: `directory` (str) - Path to the root directory to scan
 - **Output**: Prints validation results to console
 
 ### `select_directory()`
+
 Opens a GUI folder selection dialog.
+
 - **Returns**: Selected directory path as string, or empty string if cancelled
 - **Interface**: Uses tkinter's `askdirectory` dialog
 
@@ -101,13 +109,16 @@ The script handles several types of errors gracefully:
 ## Troubleshooting
 
 **Issue**: "No module named 'tkinter'"
+
 - **Solution**: Install tkinter (usually included with Python installations)
 - **Linux**: `sudo apt-get install python3-tk`
 
 **Issue**: Script runs but no dialog appears
+
 - **Solution**: Ensure you're running in a GUI environment, not a headless server
 
 **Issue**: Permission denied errors
+
 - **Solution**: Run with appropriate permissions or select a different directory
 
 ## License
