@@ -6,7 +6,7 @@ A Python script that recursively scans directories and validates the well-formed
 
 - **Recursive Directory Scanning**: Automatically searches through all subdirectories
 - **XML Well-formedness Validation**: Uses Python's built-in `xml.etree.ElementTree` parser to validate XML structure
-- **GUI Folder Selection**: Easy-to-use folder browser dialog for selecting target directories
+- **GUI or CLI**: Folder browser dialog or command-line path for headless/scripting use
 - **Comprehensive Error Reporting**: Lists all malformed XML files with specific error messages
 - **Cross-platform Compatibility**: Works on Windows, macOS, and Linux
 
@@ -28,13 +28,23 @@ A Python script that recursively scans directories and validates the well-formed
 
 ### Running the Script
 
+**With GUI (folder browser):**
+
 ```bash
-python xml_validator.py
+python xml_checker.py
 ```
+
+**With CLI (specify directory directly):**
+
+```bash
+python xml_checker.py /path/to/directory
+```
+
+This mode works in headless environments and for scripting/automation.
 
 ### How It Works
 
-1. **Select Directory**: A folder browser dialog will open automatically
+1. **Select Directory**: If no path is provided, a folder browser dialog will open automatically
 2. **Choose Target Folder**: Navigate to and select the directory containing XML files you want to validate
 3. **Automatic Validation**: The script will:
    - Recursively scan the selected directory and all subdirectories
@@ -103,7 +113,7 @@ The script handles several types of errors gracefully:
 
 - Only checks for well-formedness, not schema validation
 - Does not validate against specific DTD or XSD schemas
-- Limited to files with `.xml` extension
+- Limited to files with `.xml` extension (case-insensitive: `.xml`, `.XML`, etc.)
 - Requires GUI environment for folder selection (uses tkinter)
 
 ## Troubleshooting
@@ -120,6 +130,20 @@ The script handles several types of errors gracefully:
 **Issue**: Permission denied errors
 
 - **Solution**: Run with appropriate permissions or select a different directory
+
+## Testing
+
+Run the test suite with:
+
+```bash
+python -m pytest tests/ -v
+```
+
+Or with unittest:
+
+```bash
+python -m unittest discover -s tests -v
+```
 
 ## License
 
