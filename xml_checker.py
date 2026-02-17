@@ -1,7 +1,10 @@
-import xml.etree.ElementTree as ET
+import argparse
 import os
+import sys
+import xml.etree.ElementTree as ET
 from tkinter import Tk
 from tkinter.filedialog import askdirectory
+
 
 def check_xml_format(file_path):
     """
@@ -27,7 +30,7 @@ def check_files_in_directory(directory):
     # Traverse the directory and subdirectories
     for root, _, files in os.walk(directory):
         for file_name in files:
-            if file_name.endswith(('.xml')):
+            if file_name.lower().endswith('.xml'):
                 file_path = os.path.join(root, file_name)
                 if not check_xml_format(file_path):
                     bad_files.append(file_path)
@@ -43,15 +46,38 @@ def select_directory():
     """
     Open a folder browser window to select a directory.
     """
-    Tk().withdraw()  # Hide the root Tkinter window
-    directory = askdirectory(title="Select Directory to Check XML Files")
-    return directory
+    root = Tk()
+    root.withdraw()
+    try:
+        directory = askdirectory(title="Select Directory to Check XML Files")
+        return directory or ""
+    finally:
+        root.destroy()
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Validate XML well-formedness in a directory."
+    )
+    parser.add_argument(
+        "directory",
+        nargs="?",
+        help="Directory to scan (opens folder browser if not provided)",
+    )
+    args = parser.parse_args()
+
+    if args.directory:
+        if not os.path.isdir(args.directory):
+            print(f"Error: '{args.directory}' is not a valid directory.", file=sys.stderr)
+            sys.exit(1)
+        check_files_in_directory(args.directory)
+    else:
+        directory = select_directory()
+        if directory:
+            check_files_in_directory(directory)
+        else:
+            print("No directory was selected.")
+
 
 if __name__ == "__main__":
-    # Open a file browser to select the directory
-    directory = select_directory()
-    
-    if directory:
-        check_files_in_directory(directory)
-    else:
-        print("No directory was selected.")
+    main()
