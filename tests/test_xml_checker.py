@@ -93,7 +93,7 @@ class TestCheckFilesInDirectory(unittest.TestCase):
         self._write_file("b.xml", "<b><c/></b>")
         with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
             check_files_in_directory(self.temp_dir)
-            self.assertIn("All XML files are well-formed", mock_stdout.getvalue())
+            self.assertIn("well-formed", mock_stdout.getvalue())
 
     def test_some_invalid(self):
         """Invalid files should be reported."""
@@ -110,7 +110,7 @@ class TestCheckFilesInDirectory(unittest.TestCase):
         self._write_file("test.XML", "<root/>")
         with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
             check_files_in_directory(self.temp_dir)
-            self.assertIn("All XML files are well-formed", mock_stdout.getvalue())
+            self.assertIn("well-formed", mock_stdout.getvalue())
 
     def test_skips_non_xml(self):
         """Non-.xml files should be ignored."""
@@ -118,7 +118,127 @@ class TestCheckFilesInDirectory(unittest.TestCase):
         self._write_file("config.xml", "<config/>")
         with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
             check_files_in_directory(self.temp_dir)
-            self.assertIn("All XML files are well-formed", mock_stdout.getvalue())
+            self.assertIn("well-formed", mock_stdout.getvalue())
+
+    def test_no_xml_files(self):
+        """Directory with no XML files should report none found."""
+        self._write_file("data.txt", "not xml")
+        with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+            check_files_in_directory(self.temp_dir)
+            self.assertIn("No XML files found", mock_stdout.getvalue())
+
+    def test_file_count_in_output(self):
+        """Output should include count of files checked."""
+        self._write_file("a.xml", "<a/>")
+        self._write_file("b.xml", "<b/>")
+        self._write_file("c.xml", "<c/>")
+        with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+            check_files_in_directory(self.temp_dir)
+            self.assertIn("3 XML files", mock_stdout.getvalue())
+
+    def test_failure_count_in_output(self):
+        """Output should include count of failed files."""
+        self._write_file("good.xml", "<root/>")
+        self._write_file("bad1.xml", "<root><unclosed>")
+        self._write_file("bad2.xml", "not xml")
+        with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+            check_files_in_directory(self.temp_dir)
+            self.assertIn("2 of 3", mock_stdout.getvalue())
+
+
+try:
+    from lxml import etree
+    HAS_LXML = True
+except ImportError:
+    HAS_LXML = False
+
+
+@unittest.skipUnless(HAS_LXML, "lxml not installed")
+class TestSchemaValidation(unittest.TestCase):
+    """Tests for XSD schema validation."""
+
+    SAMPLE_XSD = '''\
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="book">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="title" type="xs:string"/>
+        <xs:element name="author" type="xs:string"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>'''
+
+    def setUp(self):
+        self.temp_dir = tempfile.mkdtemp()
+        self.schema_path = self._write_file("schema.xsd", self.SAMPLE_XSD)
+
+    def tearDown(self):
+        for root, dirs, files in os.walk(self.temp_dir, topdown=False):
+            for f in files:
+                os.remove(os.path.join(root, f))
+            for d in dirs:
+                os.rmdir(os.path.join(root, d))
+        os.rmdir(self.temp_dir)
+
+    def _write_file(self, name, content):
+        path = os.path.join(self.temp_dir, name)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(content)
+        return path
+
+    def test_valid_against_schema(self):
+        """XML matching schema should pass validation."""
+        from xml_checker import validate_xml_schema, load_schema
+        self._write_file("book.xml",
+            "<book><title>Test</title><author>Author</author></book>")
+        schema = load_schema(self.schema_path)
+        self.assertTrue(validate_xml_schema(
+            os.path.join(self.temp_dir, "book.xml"), schema))
+
+    def test_invalid_against_schema(self):
+        """XML not matching schema should fail validation."""
+        from xml_checker import validate_xml_schema, load_schema
+        self._write_file("bad_book.xml",
+            "<book><title>Test</title></book>")
+        schema = load_schema(self.schema_path)
+        with patch("sys.stdout", new_callable=StringIO):
+            self.assertFalse(validate_xml_schema(
+                os.path.join(self.temp_dir, "bad_book.xml"), schema))
+
+    def test_malformed_xml_with_schema(self):
+        """Malformed XML should fail schema validation."""
+        from xml_checker import validate_xml_schema, load_schema
+        self._write_file("broken.xml", "<book><unclosed>")
+        schema = load_schema(self.schema_path)
+        with patch("sys.stdout", new_callable=StringIO):
+            self.assertFalse(validate_xml_schema(
+                os.path.join(self.temp_dir, "broken.xml"), schema))
+
+    def test_directory_with_schema(self):
+        """check_files_in_directory should use schema when provided."""
+        from xml_checker import load_schema
+        self._write_file("valid.xml",
+            "<book><title>T</title><author>A</author></book>")
+        self._write_file("invalid.xml",
+            "<book><title>T</title></book>")
+        schema = load_schema(self.schema_path)
+        with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+            check_files_in_directory(self.temp_dir, schema=schema)
+            output = mock_stdout.getvalue()
+            self.assertIn("1 of 2", output)
+            self.assertIn("invalid.xml", output)
+
+    def test_all_valid_with_schema_output(self):
+        """All schema-valid files should show schema-valid message."""
+        from xml_checker import load_schema
+        self._write_file("book.xml",
+            "<book><title>T</title><author>A</author></book>")
+        schema = load_schema(self.schema_path)
+        with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+            check_files_in_directory(self.temp_dir, schema=schema)
+            self.assertIn("schema-valid", mock_stdout.getvalue())
 
 
 if __name__ == "__main__":
