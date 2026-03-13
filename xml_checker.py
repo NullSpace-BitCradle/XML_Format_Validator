@@ -2,8 +2,6 @@ import argparse
 import os
 import sys
 import xml.etree.ElementTree as ET
-from tkinter import Tk
-from tkinter.filedialog import askdirectory
 
 
 def check_xml_format(file_path):
@@ -46,6 +44,9 @@ def select_directory():
     """
     Open a folder browser window to select a directory.
     """
+    from tkinter import Tk
+    from tkinter.filedialog import askdirectory
+
     root = Tk()
     root.withdraw()
     try:
