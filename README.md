@@ -100,7 +100,10 @@ A directory that cannot be read is reported and counted as a failure, so a parti
 | Code | Meaning |
 |------|---------|
 | 0 | Every XML file passed, or none were found |
-| 1 | A file failed, a directory could not be read, or the arguments were invalid (missing directory, missing or bad schema, `lxml` not installed) |
+| 1 | A file failed, a directory could not be read, or a path argument was invalid (missing directory, missing or bad schema, `lxml` not installed) |
+| 2 | Invalid command-line usage, such as an unknown option (argparse's own exit code) |
+
+Exiting 1 on failure is a change from earlier versions, which always exited 0. See [CHANGELOG.md](CHANGELOG.md).
 
 ## Functions
 
@@ -118,7 +121,7 @@ A directory that cannot be read is reported and counted as a failure, so a parti
 python -m unittest discover -s tests -v
 ```
 
-33 tests total: 24 core tests (no dependencies) + 9 schema validation tests (require `lxml`, auto-skipped if not installed). They cover exit codes, unreadable directories and the command line as well as the helper functions.
+34 tests total: 25 core tests (no dependencies) + 9 schema validation tests (require `lxml`, auto-skipped if not installed). They cover exit codes, unreadable directories and the command line as well as the helper functions.
 
 ## Limitations
 

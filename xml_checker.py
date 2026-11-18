@@ -167,7 +167,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Validate XML well-formedness and optionally check against an XSD schema. "
         "Exits 0 if every file passed, 1 if any file failed, a directory could not be "
-        "read, or the arguments were invalid."
+        "read, or a path argument was invalid; 2 for invalid command-line usage."
     )
     parser.add_argument(
         "directory",

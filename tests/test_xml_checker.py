@@ -267,6 +267,10 @@ class TestCommandLine(unittest.TestCase):
         missing = os.path.join(self.temp_dir, "nope.xsd")
         self.assertEqual(self._main_exit_code(self.temp_dir, "--schema", missing), 1)
 
+    def test_exit_two_for_unknown_option(self):
+        """argparse's own usage error code, documented in the README."""
+        self.assertEqual(self._main_exit_code(self.temp_dir, "--bogus"), 2)
+
     def test_subprocess_exit_codes(self):
         """End to end: the real script returns the codes a shell or CI step sees."""
         script = os.path.join(
